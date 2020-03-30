@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import csv
 
-from math import atan2,degrees
+from math import atan2,degrees,log2
 import numpy as np
 
 #Label line with line2D label data
@@ -84,7 +84,7 @@ def labelLines(lines,align=True,xvals=None,**kwargs):
         labelLine(line,x,label,align,**kwargs)
 
 
-def create_graphic(name,file_path,column_key,exclude,operation_fun):
+def create_graphic(name,file_path,column_key,exclude,operation_fun, nazionale):
         x_out={}   
         y_out={}
 
@@ -115,6 +115,40 @@ def create_graphic(name,file_path,column_key,exclude,operation_fun):
         plt.ylabel('People')
 
         plt.show(False)
+        plt.savefig("images/"+nazionale+".png")
+
+def create_graphic_region(name,file_path,column_key,exclude,operation_fun,region_key,region, region_path, people):
+        x_out={}   
+        y_out={}
+
+        with open(file_path, 'r') as csvfile:
+                plots= csv.DictReader(csvfile, delimiter=',')
+                for row in plots:
+                        if row[region_key] in region and row[column_key] not in exclude:
+                                value = operation_fun(row)
+                                if row[column_key] in y_out:
+                                        y_out[row[column_key]].append(value)
+                                        x_out[row[column_key]].append(len(x_out[row[column_key]]))
+                                else:
+                                        y_out[row[column_key]] = [value]
+                                        x_out[row[column_key]] = [0]
+
+        plt.figure(name)
+
+        for key,value in y_out.items():
+                plt.plot(x_out[key],value,marker='o',label=key)
+
+        labelLines(plt.gca().get_lines(),zorder=2.5)
+        
+        plt.legend()
+
+        plt.title('COVID 19: ' + region_path)
+
+        plt.xlabel('Days')
+        plt.ylabel(people)
+
+        plt.show(False)
+        plt.savefig("images/"+region_path+".png")
 
 ### Main
 
@@ -122,13 +156,18 @@ exclude_region = []
 exclude_province = ["In fase di definizione/aggiornamento"]
 
 fun_totale_casi = lambda row : int(row['totale_casi'])
+fun_totale_casi_log = lambda row : log2(int(row['totale_casi'])) if int(row['totale_casi']) != 0 else 1
 fun_percentuale_guariti = lambda row: int(row['dimessi_guariti']) / int(row['totale_casi']) if int(row['totale_casi']) != 0 else 0
 
-create_graphic("Regioni",'dati-regioni/dpc-covid19-ita-regioni.csv','denominazione_regione',exclude_region, fun_totale_casi)
-create_graphic("Province",'dati-province/dpc-covid19-ita-province.csv','denominazione_provincia',exclude_province, fun_totale_casi)
-create_graphic("Nazionale",'dati-andamento-nazionale/dpc-covid19-ita-andamento-nazionale.csv','stato',[], fun_totale_casi)  
-create_graphic("Regioni Guariti / Totale Casi",'dati-regioni/dpc-covid19-ita-regioni.csv','denominazione_regione',exclude_region,fun_percentuale_guariti)
-
+#create_graphic("Regioni",'dati-regioni/dpc-covid19-ita-regioni.csv','denominazione_regione',exclude_region, fun_totale_casi)
+#create_graphic("Province",'dati-province/dpc-covid19-ita-province.csv','denominazione_provincia',exclude_province, fun_totale_casi)
+create_graphic("Nazionale",'dati-andamento-nazionale/dpc-covid19-ita-andamento-nazionale.csv','stato',[], fun_totale_casi_log, "Nazionale") 
+#create_graphic("Regioni Guariti / Totale Casi",'dati-regioni/dpc-covid19-ita-regioni.csv','denominazione_regione',exclude_region,fun_percentuale_guariti)
+#regions = []
+regions = ["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna", "Friuli Venezia Giulia", "Lazio", "Liguria", "Lombardia", "Marche", "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia", "Toscana", "P.A. Bolzano", "P.A. Trento", "Umbria", "Valle d'Aosta", "Veneto"]
+for region in regions:
+    create_graphic_region("Regione: "+region,'dati-province/dpc-covid19-ita-province.csv','denominazione_provincia',exclude_province, fun_totale_casi, 'denominazione_regione', [region], region, "People")
+    create_graphic_region("Regione: "+region + ": andamento logaritmico",'dati-province/dpc-covid19-ita-province.csv','denominazione_provincia',exclude_province, fun_totale_casi_log, 'denominazione_regione', [region], region + "-log", "log2(people)")
 
 input("Press Enter to close...")
 
