@@ -114,6 +114,16 @@ COVID-19/
 - [Dati aree misure restrittive COVID19](dati-aree-covid19.md)
 - [Metriche](metriche.md)
 
+## Grafici
+Installazione dipendenze:
+```
+    pip3 install -r requirements.txt
+```
+Avvia:
+```
+    python3 draw_graph.py
+```
+
 ## Licenza
 
 [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/deed.it) - [Visualizza licenza](https://github.com/pcm-dpc/COVID-19/blob/master/LICENSE)
